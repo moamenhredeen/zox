@@ -5,6 +5,7 @@ const log = @import("std").log;
 const heap = @import("std").heap;
 const process = @import("std").process;
 const build_options = @import("build_options");
+const lexer = @import("compiler/lexer.zig");
 
 const panic = @import("utils.zig").panic;
 
