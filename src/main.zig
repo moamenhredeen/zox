@@ -18,16 +18,20 @@ const usage =
     \\General Options:
     \\
     \\  -h, --help       Print command-specific usage
+    \\
 ;
 
 pub fn main() anyerror!void {
-    var arenaInstance = heap.ArenaAllocator.init(heap.page_allocator);
-    const arena = arenaInstance.allocator();
-    const args = try process.argsAlloc(arena);
-    try parseArgs(arena, args);
+    var arena_allocator = heap.ArenaAllocator.init(heap.page_allocator);
+    const allocator = arena_allocator.allocator();
+    const args = try process.argsAlloc(allocator);
+    try parseArgs(allocator, args);
 }
 
-pub fn parseArgs(allocator: mem.Allocator, args: [][]u8) !void {
+pub fn parseArgs(
+    allocator: std.mem.Allocator,
+    args: []const []const u8,
+) !void {
     if (args.len <= 1) {
         log.info("{s}", .{usage});
         panic("expected command argument", .{});
@@ -42,9 +46,9 @@ pub fn parseArgs(allocator: mem.Allocator, args: [][]u8) !void {
     } else if (mem.eql(u8, cmd, "eval")) {
         try cmdEval(allocator, cmdArgs);
     } else if (mem.eql(u8, cmd, "help") or mem.eql(u8, cmd, "-h") or mem.eql(u8, cmd, "--help")) {
-        try io.getStdOut().writeAll(usage);
+        try std.io.getStdOut().writeAll(usage);
     } else if (mem.eql(u8, cmd, "version")) {
-        try io.getStdOut().writeAll(build_options.version ++ "\n");
+        try std.io.getStdOut().writeAll(build_options.version ++ "\n");
     } else {
         log.info("{s}", .{usage});
         panic("unknown command: {s}", .{args[1]});
@@ -52,38 +56,55 @@ pub fn parseArgs(allocator: mem.Allocator, args: [][]u8) !void {
 }
 
 /// run command
-pub fn cmdRun(_: mem.Allocator, args: [][]u8) !void {
-    const writer = io.getStdOut().writer();
-    for (args) |arg| {
-        try writer.writeAll(arg);
+pub fn cmdRun(
+    allocator: mem.Allocator,
+    args: []const []const u8,
+) !void {
+    if (args.len < 1) {
+        panic("file name is required. please provide file name when using the run the command", .{});
+    } else if (args.len > 1) {
+        panic("too many arguments. run command requires only the file name to run", .{});
     }
+
+    const file = try std.fs.cwd().openFile(args[0], .{ .mode = .read_write });
+    const content = try file.readToEndAlloc(allocator, std.math.maxInt(u32));
+    try std.io.getStdOut().writeAll(content);
 }
 
-pub fn cmdRepl(allocator: mem.Allocator, _: [][]u8) !void {
-    const writer = io.getStdOut().writer();
-    const reader = io.getStdIn().reader();
+pub fn cmdRepl(
+    allocator: mem.Allocator,
+    _: []const []const u8,
+) !void {
     while (true) {
-        try writer.writeAll("> ");
-        const input = reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(u32)) catch "";
+        try std.io.getStdOut().writeAll("> ");
+        const input = std.io.getStdIn().reader().readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(u32)) catch "";
         if (mem.eql(u8, input, "exit")) {
             return;
         } else if (mem.startsWith(u8, input, "echo")) {
-            try writer.print("{s}\n", .{input[4..]});
+            try std.io.getStdOut().writeAll(input[4..]);
+            try std.io.getStdOut().writeAll("\n");
         } else {
             const result = try eval(allocator, input);
-            try writer.print("{s}\n", .{result});
+            try std.io.getStdOut().writeAll(result);
+            try std.io.getStdOut().writeAll("\n");
         }
     }
 }
 
-pub fn cmdEval(allocator: mem.Allocator, args: [][]const u8) !void {
+pub fn cmdEval(
+    allocator: mem.Allocator,
+    args: []const []const u8,
+) !void {
     if (args.len != 1) {
         panic("eval takes only 1 argument, which the script to evaluate", .{});
     }
     const result = try eval(allocator, args[0]);
-    try io.getStdOut().writer().print("result: {s}\n", .{result});
+    try std.io.getStdOut().writeAll(result);
+    try std.io.getStdOut().writeAll("\n");
 }
 
-pub fn eval(_: mem.Allocator, _: []const u8) ![]const u8 {
-    return "evaluating script ...";
+pub fn eval(allocator: mem.Allocator, script: []const u8) ![]const u8 {
+    const m = "\nevaluating script ...";
+    const res = try std.mem.concat(allocator, u8, &[_][]const u8{ script, m });
+    return res;
 }
