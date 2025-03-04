@@ -10,6 +10,16 @@
     "shell": "system"
   },
   {
+    "label": "lexer tests",
+    "command": "zig test src/compiler/lexer.zig",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "no_focus",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
     "label": "run",
     "command": "zig build run",
     "use_new_terminal": false,
