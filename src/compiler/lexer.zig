@@ -90,6 +90,21 @@ pub const Lexer = struct {
                 ';' => .{ .line = line, .lexeme = self.source[start .. current + 1], .token_type = .SIMICOLON },
                 '*' => .{ .line = line, .lexeme = self.source[start .. current + 1], .token_type = .STAR },
                 '/' => .{ .line = line, .lexeme = self.source[start .. current + 1], .token_type = .SLASH },
+                '!' => blk: {
+                    if ((current + 1 < self.source.len) and (self.source[current + 1] == '=')) {
+                        current += 1;
+                        break :blk .{
+                            .line = line,
+                            .lexeme = self.source[start .. current + 1],
+                            .token_type = .BANG_EQUAL,
+                        };
+                    }
+                    break :blk .{
+                        .line = line,
+                        .lexeme = self.source[start .. current + 1],
+                        .token_type = .BANG,
+                    };
+                },
                 else => {
                     std.log.err("unexpected character in line {}", .{line});
                     continue;
@@ -144,4 +159,19 @@ test "unknown characters should be ignored" {
     var lexer = Lexer.init(allocator, "@");
     const tokens = try lexer.scan();
     try std.testing.expectEqual(1, tokens.len);
+}
+
+test "multi character operator" {
+    var arena_allocator = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena_allocator.deinit();
+
+    const allocator = arena_allocator.allocator();
+
+    var lexer = Lexer.init(allocator, "! !=");
+    const tokens = try lexer.scan();
+    try std.testing.expectEqualDeep(&[_]Token{
+        Token{ .line = 1, .lexeme = "!", .token_type = .BANG },
+        Token{ .line = 1, .lexeme = "!=", .token_type = .BANG_EQUAL },
+        Token{ .line = 1, .lexeme = "", .token_type = .EOF },
+    }, tokens);
 }
