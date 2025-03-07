@@ -1,2 +1,13 @@
+
+# zig generated files
 .zig-cache/
 zig-out/
+
+# vscode
+.vscode/
+
+# zed 
+.zed/
+
+# jetbrains
+.idea/
