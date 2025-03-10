@@ -1,10 +1,17 @@
+//! Tokenizer is reponsible for reading the source files
+//! and turning them into a stream of (will, as the name suggest) tokens.
+//! NOTE: the current implementation uses an array list to return
+//! the scanned tokens. it is not very efficiant approach and make the api
+//! hard to use. i am planning to implement it in a way, that it does not
+//! allocate memory during the scanning process (the same approach is used
+//! by zig tokenizer)
+
 const std = @import("std");
 const panic = @import("../utils.zig").panic;
 const eq = std.mem.eql;
 
-/// token type
+/// represent all possible token types
 const TokenType = enum {
-    // single character tokens
     LEFT_PAREN,
     RIGHT_PAREN,
     LEFT_BRACE,
@@ -16,8 +23,6 @@ const TokenType = enum {
     SIMICOLON,
     SLASH,
     STAR,
-
-    // one or two character tokens
     BANG,
     BANG_EQUAL,
     EQUAL,
@@ -26,13 +31,9 @@ const TokenType = enum {
     GREATER_EQUAL,
     LESS,
     LESS_EQUAL,
-
-    // Literals
     IDENTIFIER,
     STRING,
     NUMBER,
-
-    // Keywords
     NIL,
     TRUE,
     FALSE,
@@ -49,17 +50,18 @@ const TokenType = enum {
     THIS,
     SUPER,
     PRINT,
-
     EOF,
 };
 
-/// token representation
+/// token represent a group of characters (also called
+/// lexeme) mapped to specific type
 const Token = struct {
     token_type: TokenType,
     lexeme: []const u8,
     line: u32,
 };
 
+/// Tokenizer Error
 const SyntaxError = error{
     SomeError,
 };
