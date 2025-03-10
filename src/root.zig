@@ -1,6 +1,6 @@
 //! zox root module
 
-pub const lexer = @import("./tokenizer.zig");
+pub const tokenizer = @import("./tokenizer.zig");
 
 comptime {
     const std = @import("std");
