@@ -11,7 +11,7 @@ const panic = @import("../utils.zig").panic;
 const eq = std.mem.eql;
 
 /// represent all possible token types
-const TokenType = enum {
+pub const TokenType = enum {
     LEFT_PAREN,
     RIGHT_PAREN,
     LEFT_BRACE,
@@ -55,7 +55,7 @@ const TokenType = enum {
 
 /// token represent a group of characters (also called
 /// lexeme) mapped to specific type
-const Token = struct {
+pub const Token = struct {
     token_type: TokenType,
     lexeme: []const u8,
     line: u32,
