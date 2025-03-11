@@ -4,6 +4,7 @@
 
 pub const cli = @import("./cli.zig");
 pub const tokenizer = @import("./tokenizer.zig");
+pub const parser = @import("./parser.zig");
 
 comptime {
     const std = @import("std");
